@@ -44,7 +44,7 @@ class Git2Pdf
 
         #labels.include?(['BUG','FEATURE','ENHANCEMENT','QUESTION'])
         hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}"}
-        batch << hash
+        batch << hash unless labels.include? 'STORY'
       end
     end
 
