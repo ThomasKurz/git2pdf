@@ -150,6 +150,25 @@ class Git2Pdf
           text_box issue[:long_title] ? issue[:long_title][0..120] : "NO DESCRIPTION", :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
         end
 
+        if issue[:users].size > 0 then
+            font 'Lato', :style => :normal, size: 10
+            start_users = 25
+            end_users = 50 * issue[:users].size() + start_users
+            horizontal_line start_users, end_users, :at => 120
+            horizontal_line start_users, end_users, :at => 130
+            horizontal_line start_users, end_users, :at => 25
+            vertical_line 130, 25, :at => end_users
+            stroke
+            issue[:users].each do |x|
+                text_box x[0], :at => [start_users + 3, 130], :width => 210-margin, :overflow => :shrink_to_fit
+                text_box x[1], :at => [start_users + 3, 120 - 2], :width => 210-margin, :overflow => :shrink_to_fit
+                vertical_line 130, 25, :at => start_users
+                vertical_line 120, 25, :at => start_users + 25
+                stroke
+                start_users += 50
+            end
+        end
+
         # Labels
         font 'Lato', :style => :bold, size: 12
         text_box issue[:labels].length == 0 ? "" : issue[:labels], :at => [margin, 20], :width => 220-margin, :overflow => :shrink_to_fit
