@@ -49,8 +49,8 @@ class Git2Pdf
         milestone = val["milestone"] ? val["milestone"]["title"] : ""
 
         #labels.include?(['BUG','FEATURE','ENHANCEMENT','QUESTION'])
-        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}"}
-        batch << hash unless labels.include? 'STORY'
+        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}", users: users}
+        batch << hash
       end
     end
 
