@@ -32,6 +32,12 @@ class Git2Pdf
       hash = JSON.parse(json)
 
       hash.each do |val|
+        users = []
+        val["body"] && val["body"].split("\n").each do |line|
+            user = /@(.{7}).+:\s(.+)h/.match line
+            users << user.captures unless user == nil
+        end
+
         labels = val["labels"].collect { |l| l["name"].upcase }.join(', ')
         type = ""
         type = "BUG" if labels =~ /bug/i #not billable
