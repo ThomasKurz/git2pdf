@@ -97,25 +97,25 @@ class Git2Pdf
         #grid(row,col).bounding_box do
         #transparent(0.1) { stroke_bounds }
 
-        y_offset = 195
+        y_offset = 205
 
         #Ref
-        font 'Lato', :style => :bold, size: 28
+        font 'Lato', :style => :bold, size: 24
         text_box "##{issue[:ref]}" || "", :at => [185, y_offset], :width => 100, :overflow => :shrink_to_fit, :align => :right
 
         # image watermark
-        image logo, :at=>[240,60], :width=>50
+        #image logo, :at=>[240,60], :width=>50
 
         #Short title
         short_title = issue[:short_title]
         short_title = short_title.split('/')[1] if short_title =~ /\//
-        font 'Lato', :style => :bold, size: 20
+        font 'Lato', :style => :bold, size: 16
         text_box short_title, :at => [margin, y_offset], :width => 210-margin, :overflow => :shrink_to_fit
 
         if issue[:milestone] and issue[:milestone] != ""
-          y_offset = y_offset - 30
+          y_offset = y_offset - 20
           # Milestone
-          font 'Lato', :style => :light, size: 16
+          font 'Lato', :style => :light, size: 14
           text_box issue[:milestone].upcase, :at => [margin, y_offset], :width => 280, :overflow => :shrink_to_fit
           #text_box fields["due"] || "", :at=>[120,20], :width=>60, :overflow=>:shrink_to_fit
           y_offset = y_offset + 20
@@ -144,9 +144,9 @@ class Git2Pdf
 #         end
 
         if issue[:long_title]
-          y_offset = y_offset - 50
+          y_offset = y_offset - 40
           # Long title
-          font 'Lato', :style => :light, size: 18
+          font 'Lato', :style => :light, size: 14
           text_box issue[:long_title] ? issue[:long_title][0..120] : "NO DESCRIPTION", :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
         end
 
