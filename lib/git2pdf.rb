@@ -12,15 +12,7 @@ class Git2Pdf
     @org = options[:org] || nil
   end
 
-  def execute
-    batch = get_issues
-    pdf(batch)
-  end
-
-  def get_issues
-    batch = []
-    self.repos.each do |repo|
-      #json = `curl -u#{auth} https://api.github.com/repos/pocketworks/repo/issues?per_page=100 | jq '.[] | {state: .state, milestone: .milestone.title, created_at: .created_at, title: .title, number: .number, labels: [.labels[].name]}'`
+  def get_issues(repo)
       json = ""
       if @org
         json = open("https://api.github.com/repos/#{@org}/#{repo}/issues?per_page=200&state=open", :http_basic_authentication => basic_auth).read
@@ -28,10 +20,19 @@ class Git2Pdf
         # for stuff like bob/stuff
         json = open("https://api.github.com/repos/#{repo}/issues?per_page=200&state=open", :http_basic_authentication => basic_auth).read
       end
+      JSON.parse(json)
+  end
 
-      hash = JSON.parse(json)
+  def execute
+    batch = generate_postits
+    pdf(batch)
+  end
 
-      hash.each do |val|
+  def generate_postits
+    batch = []
+    self.repos.each do |repo|
+      issues = get_issues repo
+      issues.each do |val|
         users = []
         user_story = ""
         val["body"] && val["body"].split("\n").each do |line|
