@@ -33,9 +33,12 @@ class Git2Pdf
 
       hash.each do |val|
         users = []
+        user_story = ""
         val["body"] && val["body"].split("\n").each do |line|
             user = /@(.{7}).+:\s(.+)h/.match line
             users << user.captures unless user == nil
+            story = /User Story: (.+)/.match(line)
+            user_story = story.captures[0] unless story == nil
         end
 
         labels = val["labels"].collect { |l| l["name"].upcase }.join(', ')
@@ -49,7 +52,7 @@ class Git2Pdf
         milestone = val["milestone"] ? val["milestone"]["title"] : ""
 
         #labels.include?(['BUG','FEATURE','ENHANCEMENT','QUESTION'])
-        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}", users: users}
+        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}", users: users, user_story: user_story}
         batch << hash
       end
     end
@@ -115,7 +118,7 @@ class Git2Pdf
         if issue[:milestone] and issue[:milestone] != ""
           y_offset = y_offset - 20
           # Milestone
-          font 'Lato', :style => :light, size: 14
+          font 'Lato', :style => :light, size: 12
           text_box issue[:milestone].upcase, :at => [margin, y_offset], :width => 280, :overflow => :shrink_to_fit
           #text_box fields["due"] || "", :at=>[120,20], :width=>60, :overflow=>:shrink_to_fit
           y_offset = y_offset + 20
@@ -146,8 +149,8 @@ class Git2Pdf
         if issue[:long_title]
           y_offset = y_offset - 40
           # Long title
-          font 'Lato', :style => :light, size: 14
-          text_box issue[:long_title] ? issue[:long_title][0..120] : "NO DESCRIPTION", :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
+          font 'Lato', :style => :light, size: 11
+          text_box issue[:long_title] ? issue[:long_title][0..100] : "NO DESCRIPTION", :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
         end
 
         if issue[:users].size > 0 then
@@ -172,7 +175,7 @@ class Git2Pdf
         # Labels
         font 'Lato', :style => :bold, size: 12
         text_box issue[:labels].length == 0 ? "" : issue[:labels], :at => [margin, 20], :width => 220-margin, :overflow => :shrink_to_fit
-        #text_box fields[:due] || "", :at=>[120,20], :width=>60, :overflow=>:shrink_to_fit
+        text_box "Story: " + issue[:user_story], :at=>[205,20], :width=>60, :overflow=>:shrink_to_fit unless issue[:user_story] == ""
         #end
 
         
