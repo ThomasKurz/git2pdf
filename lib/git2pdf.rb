@@ -10,6 +10,7 @@ class Git2Pdf
     @repos = options[:repos] || []
     @basic_auth = options[:basic_auth] || nil
     @org = options[:org] || nil
+    @issue_titles = Hash.new ""
   end
 
   def get_issues(repo)
@@ -30,15 +31,17 @@ class Git2Pdf
 
   def generate_postits
     batch = []
+
     self.repos.each do |repo|
       issues = get_issues repo
       issues.each do |val|
+        @issue_titles[val["number"].to_s] = val["title"]
         users = []
         user_story = ""
         val["body"] && val["body"].split("\n").each do |line|
             user = /@(.{7}).+:\s(.+)h/.match line
             users << user.captures unless user == nil
-            story = /User Story: (.+)/.match(line)
+            story = /User Story: #(.+)/.match(line)
             user_story = story.captures[0] unless story == nil
         end
 
@@ -54,15 +57,15 @@ class Git2Pdf
 
         #labels.include?(['BUG','FEATURE','ENHANCEMENT','QUESTION'])
         hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}", users: users, user_story: user_story}
-        batch << hash
+        batch << hash unless labels.split(",") == ["STORY"]
       end
     end
-
     batch
   end
 
   def pdf(batch)
     require 'prawn'
+    issue_titles = @issue_titles
     row = 0
     col = 0
     margin = 20
@@ -176,7 +179,7 @@ class Git2Pdf
         # Labels
         font 'Lato', :style => :bold, size: 12
         text_box issue[:labels].length == 0 ? "" : issue[:labels], :at => [margin, 20], :width => 220-margin, :overflow => :shrink_to_fit
-        text_box "Story: " + issue[:user_story], :at=>[205,20], :width=>60, :overflow=>:shrink_to_fit unless issue[:user_story] == ""
+        text_box "Story: " + issue_titles[issue[:user_story]], :at=>[80,20], :width=>150, :overflow=>:shrink_to_fit unless issue[:user_story] == ""
         #end
 
         
