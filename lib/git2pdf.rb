@@ -84,35 +84,12 @@ class Git2Pdf
       fill_color(0,0,0,100)
       batch.each do |issue|
 
-        ##
-        ## If needed, define a new grid
-        ##
-        #if row >= 5
-        #  start_new_page
-        #  row = 0
-        #  col = 0
-        #end
-        #
-        #if row == 0
-        #  define_grid(:columns => 2, :rows => 4, :gutter => 0)
-        #end
-
-        #
-        # Load json to use on the first card
-        #
-        #puts issue
-        #grid(row,col).bounding_box do
-        #transparent(0.1) { stroke_bounds }
-
         y_offset = 205
 
         #Ref
         font 'Lato', :style => :bold, size: 24
         text_box "##{issue[:ref]}" || "", :at => [185, y_offset], :width => 100, :overflow => :shrink_to_fit, :align => :right
-
-        # image watermark
-        #image logo, :at=>[240,60], :width=>50
-
+        #
         #Short title
         short_title = issue[:short_title]
         short_title = short_title.split('/')[1] if short_title =~ /\//
@@ -143,13 +120,6 @@ class Git2Pdf
         
         fill_color(0,0,0,100)
         
-        # if issue[:type] and issue[:type] != ""
-#           y_offset = y_offset - 20
-#           # Type
-#           font 'Lato', :style => :bold, size: 16, :color => '888888'
-#           text_box issue[:type], :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
-#         end
-
         if issue[:long_title]
           y_offset = y_offset - 40
           # Long title
@@ -181,15 +151,7 @@ class Git2Pdf
         text_box issue[:labels].length == 0 ? "" : issue[:labels], :at => [margin, 20], :width => 220-margin, :overflow => :shrink_to_fit
         text_box "Story: " + issue_titles[issue[:user_story]], :at=>[80,20], :width=>150, :overflow=>:shrink_to_fit unless issue[:user_story] == ""
         #end
-
         
-
-        #if col == 1
-        #  row = row + 1
-        #  col = 0
-        #else
-        #  col = col + 1
-        #end
         start_new_page unless issue == batch[batch.length-1]
       end
     end
