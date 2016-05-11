@@ -11,15 +11,16 @@ class Git2Pdf
     @basic_auth = options[:basic_auth] || nil
     @org = options[:org] || nil
     @issue_titles = Hash.new ""
+    @labels = "&labels=#{options[:labels]}" || ''
   end
 
   def get_issues(repo)
       json = ""
       if @org
-        json = open("https://api.github.com/repos/#{@org}/#{repo}/issues?per_page=200&state=open", :http_basic_authentication => basic_auth).read
+        json = open("https://api.github.com/repos/#{@org}/#{repo}/issues?per_page=200&state=open#{@labels}", :http_basic_authentication => basic_auth).read
       else
         # for stuff like bob/stuff
-        json = open("https://api.github.com/repos/#{repo}/issues?per_page=200&state=open", :http_basic_authentication => basic_auth).read
+        json = open("https://api.github.com/repos/#{repo}/issues?per_page=200&state=open#{@labels}", :http_basic_authentication => basic_auth).read
       end
       JSON.parse(json)
   end
@@ -53,10 +54,25 @@ class Git2Pdf
         type = "AMEND" if labels =~ /amend/i #not billable
         type = "TASK" if labels =~ /task/i #not billable
 
+        time = ""
+        time = "1 day" if labels =~ /1d/i
+        time = "2 days" if labels =~ /2d/i
+        time = "5 days" if labels =~ /5d/i
+        time = "10 days" if labels =~ /10d/i
+        time = "4 weeks" if labels =~ /4w/i
+        time = "half day" if labels =~ /halfday/i
+
+        kanban = "backlog"
+        kanban = "backlog" if labels =~ /backlog/i
+        kanban = "ready" if labels =~ /ready/i
+        kanban = "in progress" if labels =~ /in progress/i
+        kanban = "done" if labels =~ /done/i
+
         milestone = val["milestone"] ? val["milestone"]["title"] : ""
+        assignee = val["assignee"] ? val["assignee"]["login"] : ""
 
         #labels.include?(['BUG','FEATURE','ENHANCEMENT','QUESTION'])
-        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, due: "", labels: labels, milestone: "#{milestone}", users: users, user_story: user_story}
+        hash = {short_title: repo, ref: "#{val["number"]}", long_title: "#{val["title"]}", type: type, kanban: kanban, time: time, due: "", labels: labels, milestone: "#{milestone}", assignee: "#{assignee}", users: users, user_story: user_story}
         batch << hash unless labels.split(",") == ["STORY"]
       end
     end
@@ -79,8 +95,8 @@ class Git2Pdf
                      :light => "#{dir}/assets/fonts/Lato-Light.ttf"})
       font 'Lato'
       batch = batch.sort { |a, b| a["ref"]<=>b["ref"] and a["project"]<=>b["project"] }
-      #logo = open("http://www.pocketworks.co.uk/images/logo.png")
-      logo = open("#{dir}/assets/images/pocketworks.png")
+      logo = open("http://www.pocketworks.co.uk/images/logo.png")
+      #logo = open("#{dir}/assets/images/pocketworks.png")
       fill_color(0,0,0,100)
       batch.each do |issue|
 
@@ -93,37 +109,37 @@ class Git2Pdf
         #Short title
         short_title = issue[:short_title]
         short_title = short_title.split('/')[1] if short_title =~ /\//
-        font 'Lato', :style => :bold, size: 16
-        text_box short_title, :at => [margin, y_offset], :width => 210-margin, :overflow => :shrink_to_fit
+        font 'Lato', :style => :light, size: 10
+        text_box "Repo: " + short_title, :at => [margin, y_offset], :width => 210-margin, :overflow => :shrink_to_fit
 
         if issue[:milestone] and issue[:milestone] != ""
           y_offset = y_offset - 20
           # Milestone
           font 'Lato', :style => :light, size: 12
-          text_box issue[:milestone].upcase, :at => [margin, y_offset], :width => 280, :overflow => :shrink_to_fit
+          text_box "Milestone: " + issue[:milestone].upcase, :at => [margin, y_offset], :width => 280, :overflow => :shrink_to_fit
           #text_box fields["due"] || "", :at=>[120,20], :width=>60, :overflow=>:shrink_to_fit
           y_offset = y_offset + 20
         end
-        
+
         fill_color "EEEEEE"
-        fill_color "D0021B" if issue[:type] == "BUG"            
-        fill_color "1D8FCE" if issue[:type] == "TASK"            
+        fill_color "D0021B" if issue[:type] == "BUG"
+        fill_color "1D8FCE" if issue[:type] == "TASK"
         fill_color "FBF937" if issue[:type] == "FEATURE"
         fill_color "F5B383" if issue[:type] == "AMEND"
         fill_color "FBF937" if issue[:type] == "ENHANCEMENT"
 
         if issue[:type] and issue[:type] != ""
-          fill{rectangle([0,220], margin-10, 220)}          
+          fill{rectangle([0,220], margin-10, 220)}
         else
-          fill{rectangle([0,220], margin-10, 220)}          
+          fill{rectangle([0,220], margin-10, 220)}
         end
-        
+
         fill_color(0,0,0,100)
-        
+
         if issue[:long_title]
-          y_offset = y_offset - 40
+          y_offset = y_offset - 60
           # Long title
-          font 'Lato', :style => :light, size: 11
+          font 'Lato', :style => :bold, size: 14
           text_box issue[:long_title] ? issue[:long_title][0..100] : "NO DESCRIPTION", :at => [margin, y_offset], :width => 280-margin, :overflow => :shrink_to_fit
         end
 
@@ -146,12 +162,47 @@ class Git2Pdf
             end
         end
 
-        # Labels
-        font 'Lato', :style => :bold, size: 12
-        text_box issue[:labels].length == 0 ? "" : issue[:labels], :at => [margin, 20], :width => 220-margin, :overflow => :shrink_to_fit
-        text_box "Story: " + issue_titles[issue[:user_story]], :at=>[80,20], :width=>150, :overflow=>:shrink_to_fit unless issue[:user_story] == ""
+        # kanban state
+        font 'Lato', :style => :italic, size: 8
+        text_box issue[:kanban].length == 0 ? "" : "Kanban state: " + issue[:kanban],
+          :at => [margin, 90+margin],
+          :width => 220-margin,
+          :overflow =>
+          :shrink_to_fit,
+          :align => :left
+
+        # estimated time
+        font 'Lato', :style => :italic, size: 8
+        text_box issue[:time].length == 0 ? "Est. time: ???" : "Est. time: " + issue[:time],
+          :at => [margin, 80+margin],
+          :width => 220-margin,
+          :overflow =>
+          :shrink_to_fit,
+          :align => :left
+
+        # assignee
+        font 'Lato', :style => :bold, size: 8
+        text_box issue[:assignee].length == 0 ? "Responsible:\r\n???" : "Responsible:\r\n" + issue[:assignee],
+          :at => [220, 70+margin],
+          :width => 70-margin,
+          :height => 70,
+          :overflow => :shrink_to_fit,
+          :align => :right,
+          :valign => :bottom
+
+          # Labels
+        font 'Lato', :style => :normal, size: 8
+        lb = issue[:labels].gsub(",", "\r\n")
+        text_box issue[:labels].length == 0 ? "" : lb,
+          :at => [margin, 70+margin],
+          :width => 150-margin,
+          :height => 70,
+          :overflow => :shrink_to_fit,
+          :align => :left,
+          :valign => :bottom
+
         #end
-        
+
         start_new_page unless issue == batch[batch.length-1]
       end
     end

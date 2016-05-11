@@ -2,6 +2,24 @@
 
 by [Pocketworks](http://pocketworks.co.uk), a UK mobile apps and sales technology development company.
 
+# iPLON comments
+## build && install
+```ruby
+gem build git2pdf.gemspec && sudo gem install git2pdf-0.1.4.gem
+```
+## use
+```bash
+git2pdf gen -u ThomasKurz -l SHA iplon/proman
+pdfnup --frame true --nup 3x3 issues.pdf
+okular issues-nup.pdf
+```
+
+## dependencies
+```bash
+sudo apt-get install pdfjam
+```
+
+
 # Git2Pdf
 
 **Print physical Kanban cards from your GitHub issues, and stick that sweet stuff on your office wall**
@@ -74,4 +92,3 @@ TODO:
 
 Copyright (c) 2014 Tobin Harris. See LICENSE.txt for
 further details.
-
